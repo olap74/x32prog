@@ -1,0 +1,42 @@
+watch_on:
+- parameter: "/config/mute/2"
+  type: int32
+  actions:
+  - value: 0
+    set:
+    - path: "/ch/29/mix/on"
+      value: 1
+      type: int32
+    - path: "/ch/30/mix/on"
+      value: 1
+      type: int32
+    - path: "/ch/15/gate/keysrc"
+      value: 29
+      type: int32
+    - path: "/ch/15/gate/hold"
+      value: 0.8
+      type: float32
+    - path: "/ch/15/gate/release"
+      value: 0.7
+      type: float32
+  - value: 1
+    set:
+    - path: "/ch/29/mix/on"
+      value: 0
+      type: int32
+    - path: "/ch/30/mix/on"
+      value: 0
+      type: int32
+    - path: "/ch/15/gate/keysrc"
+      value: 59
+      type: int32
+    - path: "/ch/15/gate/hold"
+      value: 0.99999
+      type: float32
+    - path: "/ch/15/gate/release"
+      value: 0.99999
+      type: float32
+set:
+- path: "/config/mute/3"
+  type: int32
+  value: 1
