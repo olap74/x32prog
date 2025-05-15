@@ -1,0 +1,144 @@
+name: Binaries Builds
+on:
+  push:
+    tags:
+      - '*'
+      - '**'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: '0'
+      - name: Define a tag
+        id: tag
+        run: echo "tag=${GITHUB_REF#refs/*/}" >> $GITHUB_OUTPUT
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+
+  build-windows:
+    needs: prepare
+    runs-on: windows-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Go (or replace with your language runtime)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Build Binary
+        run: |
+          go get -v ./...
+          go build -tags timetzdata -o oscprog-windows-amd64.exe .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscprog-windows-amd64.exe
+          path: oscprog-windows-amd64.exe
+
+  build-linux:
+    needs: prepare
+    runs-on: ubuntu-latest      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Go (or replace with your language runtime)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Build Binary
+        run: |
+          set -x
+          sudo apt update 
+          sudo apt install libasound2-dev
+          go get -v ./...
+          go build -tags timetzdata -o oscprog-linux-amd64 .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscprog-linux-amd64
+          path: oscprog-linux-amd64
+  build-linux-arm:
+    needs: prepare
+    runs-on: ubuntu-24.04-arm      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Go (or replace with your language runtime)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Build Binary
+        run: |
+          set -x
+          sudo apt update 
+          sudo apt install libasound2-dev
+          go get -v ./...
+          go build -tags timetzdata -o oscprog-linux-arm64 .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscprog-linux-arm64
+          path: oscprog-linux-arm64
+
+  build-macos:
+    needs: prepare
+    runs-on: macos-latest      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Go (or replace with your language runtime)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Build Binary
+        run: |
+          set -x
+          uname -m
+          go get -v ./...
+          go build -tags timetzdata -o oscprog-darwin-aarch64 .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscprog-darwin-aarch64
+          path: oscprog-darwin-aarch64
+
+  build-macos-x86:
+    needs: prepare
+    runs-on: macos-13      
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+      - name: Set up Go (or replace with your language runtime)
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+      - name: Build Binary
+        run: |
+          set -x
+          uname -m
+          go get -v ./...
+          go build -tags timetzdata -o oscprog-darwin-x86 .
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: oscprog-darwin-x86
+          path: oscprog-darwin-x86
+
+  release:
+    needs: [ build-windows, build-linux, build-linux-arm, build-macos, build-macos-x86, prepare ]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: oscprog-*/oscprog-*
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          body: "Release for ${{ needs.prepare.outputs.tag }}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
